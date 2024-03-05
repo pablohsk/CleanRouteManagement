@@ -1,9 +1,14 @@
-var express = require('express');
-var router = express.Router();
+// my-node-project/index.js
+const express = require('express');
+const app = express();
+const clientesRoutes = require('./routes/clientesRoutes');
+const pool = require('./db');
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+app.use(express.json());
+
+app.use('/clientes', clientesRoutes);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-module.exports = router;

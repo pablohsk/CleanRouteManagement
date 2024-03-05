@@ -22,7 +22,16 @@ class Cliente {
             throw new Error('Erro ao cadastrar cliente');
         }
     }
- 
+    static async listarTodos() {
+        try {
+            const result = await pool.query('SELECT * FROM clientes');
+            return result.rows;
+        } catch (error) {
+            console.error('Erro ao listar clientes:', error);
+            throw new Error('Erro ao listar clientes');
+        }
+    }
+
 }
 
 module.exports = Cliente;

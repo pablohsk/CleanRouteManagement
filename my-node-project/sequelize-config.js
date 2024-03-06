@@ -4,9 +4,9 @@ const sequelize = new Sequelize({
   dialect: 'postgres',
   host: 'localhost',
   port: 5432,
-  username: 'seu-usuario',
-  password: 'sua-senha',
-  database: 'seu-banco-de-dados',
+  username: 'pablo',
+  password: 'root',
+  database: 'bd1',
 });
 
 module.exports = sequelize;

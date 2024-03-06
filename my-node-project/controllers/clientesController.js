@@ -1,4 +1,4 @@
-const Cliente = require('../models/clienteModel');
+const Cliente = require('../models/clientesModel').Cliente;
 
 const listarClientes = async (req, res) => {
     try {

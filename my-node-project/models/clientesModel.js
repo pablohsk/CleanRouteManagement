@@ -9,6 +9,9 @@ const Cliente = sequelize.define('Cliente', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
+    validate: {
+      isEmail: true,
+    },
   },
   telefone: {
     type: DataTypes.STRING,
@@ -23,54 +26,51 @@ const Cliente = sequelize.define('Cliente', {
   },
 });
 
-// Isso criará a tabela se ela não existir
-sequelize.sync();
-
 // Função para salvar um novo cliente
 const salvarCliente = async (nome, email, telefone, coordenada_x, coordenada_y) => {
-    try {
-        const novoCliente = await Cliente.create({
-            nome,
-            email,
-            telefone,
-            coordenada_x,
-            coordenada_y,
-        });
-        return novoCliente;
-    } catch (error) {
-        console.error('Erro ao cadastrar cliente:', error);
-        throw new Error('Erro ao cadastrar cliente');
-    }
+  try {
+    const novoCliente = await Cliente.create({
+      nome,
+      email,
+      telefone,
+      coordenada_x,
+      coordenada_y,
+    });
+    return novoCliente;
+  } catch (error) {
+    console.error('Erro ao cadastrar cliente:', error);
+    throw new Error('Erro ao cadastrar cliente');
+  }
 };
 
 // Função para atualizar as coordenadas de um cliente
 const atualizarCoordenadas = async (id, coordenada_x, coordenada_y) => {
-    try {
-        const clienteAtualizado = await Cliente.update(
-            { coordenada_x, coordenada_y },
-            { where: { id }, returning: true }
-        );
-        return clienteAtualizado[1][0];
-    } catch (error) {
-        console.error('Erro ao atualizar coordenadas do cliente:', error);
-        throw new Error('Erro ao atualizar coordenadas do cliente');
-    }
+  try {
+    const [_, [clienteAtualizado]] = await Cliente.update(
+      { coordenada_x, coordenada_y },
+      { where: { id }, returning: true }
+    );
+    return clienteAtualizado;
+  } catch (error) {
+    console.error('Erro ao atualizar coordenadas do cliente:', error);
+    throw new Error('Erro ao atualizar coordenadas do cliente');
+  }
 };
 
 // Função para listar todos os clientes
 const listarClientes = async () => {
-    try {
-        const clientes = await Cliente.findAll();
-        return clientes;
-    } catch (error) {
-        console.error('Erro ao listar clientes:', error);
-        throw new Error('Erro ao listar clientes');
-    }
+  try {
+    const clientes = await Cliente.findAll();
+    return clientes;
+  } catch (error) {
+    console.error('Erro ao listar clientes:', error);
+    throw new Error('Erro ao listar clientes');
+  }
 };
 
 module.exports = {
-    Cliente,
-    salvarCliente,
-    atualizarCoordenadas,
-    listarClientes,
+  Cliente,
+  salvarCliente,
+  atualizarCoordenadas,
+  listarClientes,
 };

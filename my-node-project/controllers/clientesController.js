@@ -1,5 +1,15 @@
 const pool = require('../models/db');
 
+const listarClientes = async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM clientes');
+        return result.rows;
+    } catch (error) {
+        console.error('Erro ao listar clientes:', error);
+        throw new Error('Erro ao listar clientes');
+    }
+};
+
 const calcularRota = async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM clientes');
@@ -61,5 +71,6 @@ const calcularRotaOtimizada = (clientes) => {
 };
 
 module.exports = {
+    listarClientes,
     calcularRota,
 };

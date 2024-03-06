@@ -1,20 +1,13 @@
-const { Pool } = require('pg');
+const express = require('express');
+const app = express();
+const clientesRoutes = require('./routes/clientesRoutes');
+const pool = require('./models/db');  // Use o pool de db.js
 
-// Configurações da conexão com o PostgreSQL
-const pool = new Pool({
-    user: 'seu-usuario',
-    host: 'localhost',
-    database: 'nome-do-seu-banco-de-dados',
-    password: 'sua-senha',
-    port: 5432,
-});
+app.use(express.json());
 
-// Testar a conexão
-pool.query('SELECT NOW()', (err, res) => {
-    if (err) {
-        console.error('Erro na conexão com o PostgreSQL', err);
-    } else {
-        console.log('Conexão com o PostgreSQL estabelecida em', res.rows[0].now);
-    }
-    pool.end();
+app.use('/clientes', clientesRoutes);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });

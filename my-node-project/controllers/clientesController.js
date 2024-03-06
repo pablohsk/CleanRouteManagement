@@ -1,26 +1,36 @@
-const pool = require('../models/db');
+const Cliente = require('../models/clienteModel');
 
 const listarClientes = async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM clientes');
-        return result.rows;
+        const clientes = await Cliente.listarClientes();
+        res.json(clientes);
     } catch (error) {
         console.error('Erro ao listar clientes:', error);
-        throw new Error('Erro ao listar clientes');
+        res.status(500).json({ error: 'Erro ao listar clientes' });
     }
 };
 
-const calcularRota = async (req, res) => {
+const salvarCliente = async (req, res) => {
+    const { nome, email, telefone, coordenada_x, coordenada_y } = req.body;
+
     try {
-        const result = await pool.query('SELECT * FROM clientes');
-        const clientes = result.rows;
-
-        const rotaCalculada = calcularRotaOtimizada(clientes);
-
-        res.json(rotaCalculada);
+        const novoCliente = await Cliente.salvarCliente(nome, email, telefone, coordenada_x, coordenada_y);
+        res.json(novoCliente);
     } catch (error) {
-        console.error('Erro ao calcular a rota:', error);
-        res.status(500).json({ error: 'Erro ao calcular a rota' });
+        console.error('Erro ao cadastrar cliente:', error);
+        res.status(500).json({ error: 'Erro ao cadastrar cliente' });
+    }
+};
+
+const atualizarCoordenadas = async (req, res) => {
+    const { id, coordenada_x, coordenada_y } = req.body;
+
+    try {
+        const clienteAtualizado = await Cliente.atualizarCoordenadas(id, coordenada_x, coordenada_y);
+        res.json(clienteAtualizado);
+    } catch (error) {
+        console.error('Erro ao atualizar coordenadas do cliente:', error);
+        res.status(500).json({ error: 'Erro ao atualizar coordenadas do cliente' });
     }
 };
 
@@ -72,5 +82,7 @@ const calcularRotaOtimizada = (clientes) => {
 
 module.exports = {
     listarClientes,
-    calcularRota,
+    calcularRotaOtimizada,
+    atualizarCoordenadas,
+    salvarCliente,
 };

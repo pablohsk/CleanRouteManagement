@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
     const { nome, email, telefone, coordenada_x, coordenada_y } = req.body;
     
     try {
-        const novoCliente = await clientesController.cadastrarCliente(nome, email, telefone, coordenada_x, coordenada_y);
+        const novoCliente = await clientesController.salvarCliente(nome, email, telefone, coordenada_x, coordenada_y);
         res.status(201).json(novoCliente);
     } catch (error) {
         console.error(error);
@@ -43,7 +43,7 @@ router.put('/:id', async (req, res) => {
 // Rota para calcular rota
 router.get('/rota', async (req, res) => {
     try {
-        const rotaCalculada = await clientesController.calcularRota();
+        const rotaCalculada = await clientesController.calcularRotaOtimizada();
         res.json(rotaCalculada);
     } catch (error) {
         console.error(error);

@@ -39,6 +39,9 @@ const salvarCliente = async (nome, email, telefone, coordenada_x, coordenada_y) 
     return novoCliente;
   } catch (error) {
     console.error('Erro ao cadastrar cliente:', error);
+    console.log('Detalhes do pedido:', nome, email, telefone, coordenada_x, coordenada_y);
+    console.log('Objeto de erro do Sequelize:', error);
+    
     throw new Error('Erro ao cadastrar cliente');
   }
 };

@@ -2,6 +2,14 @@ const express = require('express');
 const router = express.Router();
 const clientesController = require('../controllers/clientesController');
 
+// Middleware para debug do corpo da requisição
+router.use((req, res, next) => {
+    const body = req.body;
+    console.log('Body da requisição clientesRoute:', body);
+    req.body = body;  // Atribui o objeto modificado de volta ao req.body
+    next();
+});
+
 // Rota para listar clientes
 router.get('/', async (req, res) => {
     try {
@@ -18,7 +26,7 @@ router.post('/', async (req, res) => {
     const { nome, email, telefone, coordenada_x, coordenada_y } = req.body;
     
     try {
-        const novoCliente = await clientesController.salvarCliente(nome, email, telefone, coordenada_x, coordenada_y);
+        const novoCliente = await clientesController.salvarCliente(req.body);
         res.status(201).json(novoCliente);
     } catch (error) {
         console.error(error);

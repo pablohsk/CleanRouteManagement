@@ -10,15 +10,21 @@ const listarClientes = async (req, res) => {
     }
 };
 
-const salvarCliente = async (req, res) => {
-    const { nome, email, telefone, coordenada_x, coordenada_y } = req.body;
+const salvarCliente = async (body) => {
+    console.log('Body da requisição clientesController:', body);
+
+    const nome = body.nome;
+    const email = body.email;
+    const telefone = body.telefone;
+    const coordenada_x = body.coordenada_x;
+    const coordenada_y = body.coordenada_y;
 
     try {
         const novoCliente = await Cliente.salvarCliente(nome, email, telefone, coordenada_x, coordenada_y);
-        res.json(novoCliente);
+        return novoCliente;
     } catch (error) {
         console.error('Erro ao cadastrar cliente:', error);
-        res.status(500).json({ error: 'Erro ao cadastrar cliente' });
+        throw new Error('Erro ao cadastrar cliente');
     }
 };
 

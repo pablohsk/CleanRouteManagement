@@ -1,46 +1,45 @@
-const Cliente = require('../models/clientesModel').Cliente;
+const clientesModel = require('../models/clientesModel');
+const {salvarClienteModel} = require('../models/clientesModel')
+const {listarClientesModel} = require('../models/clientesModel');
+const {atualizarCoordenadasModel} = require('../models/clientesModel');
+const { Cliente, sequelize, Sequelize } = require('../models/clientesModel');
+const { Op } = require('sequelize');
 
 const listarClientes = async (req, res) => {
     try {
-        const clientes = await Cliente.listarClientes();
-        res.json(clientes);
+        const clientes = await listarClientesModel();
+        return res.json(clientes);
     } catch (error) {
         console.error('Erro ao listar clientes:', error);
-        res.status(500).json({ error: 'Erro ao listar clientes' });
+        return res.status(500).json({ error: 'Erro ao listar clientes' });
     }
 };
 
-const salvarCliente = async (body) => {
-    console.log('Body da requisição clientesController:', body);
+const salvarCliente = async (req, res) => {
+    console.log('Body da requisição clientesController:', req.body);
 
-    const nome = body.nome;
-    const email = body.email;
-    const telefone = body.telefone;
-    const coordenada_x = body.coordenada_x;
-    const coordenada_y = body.coordenada_y;
+    const { nome, email, telefone, coordenada_x, coordenada_y } = req.body;
 
     try {
-        const novoCliente = await Cliente.salvarCliente(nome, email, telefone, coordenada_x, coordenada_y);
-        return novoCliente;
+        const novoCliente = await salvarClienteModel(nome, email, telefone, coordenada_x, coordenada_y);
+        res.json(novoCliente);
     } catch (error) {
         console.error('Erro ao cadastrar cliente:', error);
-        throw new Error('Erro ao cadastrar cliente');
+        res.status(500).json({ error: 'Erro ao cadastrar cliente' });
     }
 };
 
-const atualizarCoordenadas = async (req, res) => {
-    const { id, coordenada_x, coordenada_y } = req.body;
-
+const atualizarCoordenadas = async (id, coordenada_x, coordenada_y) => {
     try {
-        const clienteAtualizado = await Cliente.atualizarCoordenadas(id, coordenada_x, coordenada_y);
-        res.json(clienteAtualizado);
+        const clienteAtualizado = await atualizarCoordenadasModel(id, coordenada_x, coordenada_y);
+        return clienteAtualizado;
     } catch (error) {
         console.error('Erro ao atualizar coordenadas do cliente:', error);
-        res.status(500).json({ error: 'Erro ao atualizar coordenadas do cliente' });
+        throw new Error('Erro ao atualizar coordenadas do cliente');
     }
 };
 
-const calcularRotaOtimizada = (clientes) => {
+const calcularRotaOtimizada = async (clientes) => {
     const calcularDistancia = (cliente1, cliente2) => {
         const deltaX = cliente1.coordenada_x - cliente2.coordenada_x;
         const deltaY = cliente1.coordenada_y - cliente2.coordenada_y;
@@ -52,38 +51,106 @@ const calcularRotaOtimizada = (clientes) => {
         for (let i = 0; i < rota.length - 1; i++) {
             custoTotal += calcularDistancia(rota[i], rota[i + 1]);
         }
-        custoTotal += calcularDistancia(rota[rota.length - 1], rota[0]);
+        custoTotal += calcularDistancia(rota[rota.length - 1], { coordenada_x: 0, coordenada_y: 0 });
         return custoTotal;
     };
 
-    const permutar = (arr, callback) => {
-        const heapPermute = (n, arr) => {
+    const heapPermute = (arr) => {
+        const result = [];
+
+        const swap = (a, b) => {
+            const temp = arr[a];
+            arr[a] = arr[b];
+            arr[b] = temp;
+        };
+
+        const generate = (n) => {
             if (n === 1) {
-                callback([...arr]);
+                result.push([...arr]);
             } else {
                 for (let i = 0; i < n; i++) {
-                    heapPermute(n - 1, arr);
-                    const j = n % 2 === 0 ? i : 0;
-                    [arr[n - 1], arr[j]] = [arr[j], arr[n - 1]];
+                    generate(n - 1);
+                    if (n % 2 === 0) {
+                        swap(i, n - 1);
+                    } else {
+                        swap(0, n - 1);
+                    }
                 }
             }
         };
 
-        let melhorRota = [];
-        let menorCusto = Infinity;
+        generate(arr.length);
 
-        heapPermute(clientes.length, clientes, (rotaAtual) => {
-            const custoAtual = calcularCustoTotal(rotaAtual);
-            if (custoAtual < menorCusto) {
-                melhorRota = rotaAtual;
-                menorCusto = custoAtual;
-            }
-        });
-
-        return { rota: melhorRota, custo: menorCusto };
+        return result;
     };
 
-    return permutar(clientes);
+    const permutedRoutes = await heapPermute(clientes);
+    const pontoPartida = { coordenada_x: 0, coordenada_y: 0 };
+
+    let melhorRota = [];
+    let menorCusto = Infinity;
+
+    for (const rotaAtual of permutedRoutes) {
+        const rotaComPartida = [pontoPartida, ...rotaAtual];
+        const custoAtual = calcularCustoTotal(rotaComPartida);
+
+        if (custoAtual < menorCusto) {
+            melhorRota = rotaComPartida;
+            menorCusto = custoAtual;
+        }
+    }
+
+    const idsMelhorRota = melhorRota.map(cliente => cliente.id);
+
+    return { rota: `A rota será: ${idsMelhorRota.join(', ')}`, custo: menorCusto };
+};
+
+const obterClientesPorIDs = async (clienteIDs) => {
+    try {
+        const clientes = await Cliente.findAll({
+            where: {
+                id: clienteIDs
+            }
+        });
+        return clientes;
+    } catch (error) {
+        console.error('Erro ao obter clientes por IDs:', error);
+        throw error;
+    }
+};
+
+async function filtrarClientes(filtro) {
+    try {
+      const clientesFiltrados = await Cliente.findAll({
+        where: {
+          [Op.or]: [
+            { nome: { [Op.iLike]: `%${filtro}%` } },
+            { email: { [Op.iLike]: `%${filtro}%` } },
+            { telefone: { [Op.iLike]: `%${filtro}%` } },
+          ],
+        },
+      });
+
+      console.log('Clientes filtrados:', clientesFiltrados);
+  
+      return clientesFiltrados;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+const deletarCliente = async (id) => {
+    try {
+        const clienteDeletado = await Cliente.destroy({
+            where: {
+                id,
+            },
+        });
+        return clienteDeletado;
+    } catch (error) {
+        console.error('Erro ao deletar cliente:', error);
+        throw error;
+    }
 };
 
 module.exports = {
@@ -91,4 +158,7 @@ module.exports = {
     calcularRotaOtimizada,
     atualizarCoordenadas,
     salvarCliente,
+    obterClientesPorIDs,
+    filtrarClientes,
+    deletarCliente,
 };

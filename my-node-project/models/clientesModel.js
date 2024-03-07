@@ -27,7 +27,9 @@ const Cliente = sequelize.define('Cliente', {
 });
 
 // Função para salvar um novo cliente
-const salvarCliente = async (nome, email, telefone, coordenada_x, coordenada_y) => {
+const salvarClienteModel = async (nome, email, telefone, coordenada_x, coordenada_y) => {
+  //console.log('Body da requisição clientesModel:', body);
+
   try {
     const novoCliente = await Cliente.create({
       nome,
@@ -36,18 +38,16 @@ const salvarCliente = async (nome, email, telefone, coordenada_x, coordenada_y) 
       coordenada_x,
       coordenada_y,
     });
+
     return novoCliente;
   } catch (error) {
     console.error('Erro ao cadastrar cliente:', error);
-    console.log('Detalhes do pedido:', nome, email, telefone, coordenada_x, coordenada_y);
-    console.log('Objeto de erro do Sequelize:', error);
-    
     throw new Error('Erro ao cadastrar cliente');
   }
 };
 
 // Função para atualizar as coordenadas de um cliente
-const atualizarCoordenadas = async (id, coordenada_x, coordenada_y) => {
+const atualizarCoordenadasModel = async (id, coordenada_x, coordenada_y) => {
   try {
     const [_, [clienteAtualizado]] = await Cliente.update(
       { coordenada_x, coordenada_y },
@@ -61,7 +61,7 @@ const atualizarCoordenadas = async (id, coordenada_x, coordenada_y) => {
 };
 
 // Função para listar todos os clientes
-const listarClientes = async () => {
+const listarClientesModel = async () => {
   try {
     const clientes = await Cliente.findAll();
     return clientes;
@@ -73,7 +73,7 @@ const listarClientes = async () => {
 
 module.exports = {
   Cliente,
-  salvarCliente,
-  atualizarCoordenadas,
-  listarClientes,
+  salvarClienteModel,
+  atualizarCoordenadasModel,
+  listarClientesModel,
 };

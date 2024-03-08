@@ -11,6 +11,7 @@ const ClienteList = ({ onSelecionarCliente }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [novaCoordenadaX, setNovaCoordenadaX] = useState('');
   const [novaCoordenadaY, setNovaCoordenadaY] = useState('');
+  const [modalOrdemVisitaIsOpen, setModalOrdemVisitaIsOpen] = useState(false);
 
   useEffect(() => {
     fetchClientes();
@@ -140,9 +141,21 @@ const ClienteList = ({ onSelecionarCliente }) => {
     }
   };
 
+  const handleMostrarOrdemVisita = () => {
+    // Verificar se há clientes selecionados
+    if (clientesSelecionados.length === 0) {
+      console.log('Selecione pelo menos um cliente para mostrar a ordem de visita.');
+      return;
+    }
+
+    // Exibir a ordem de visita em uma modal
+    setModalOrdemVisitaIsOpen(true);
+  };
+
   const handleCloseModal = () => {
     // Fechar o modal sem salvar
     setModalIsOpen(false);
+    setModalOrdemVisitaIsOpen(false);
   };
 
   return (
@@ -169,6 +182,13 @@ const ClienteList = ({ onSelecionarCliente }) => {
           Alterar Coordenadas
         </button>
         <button
+          className="button-primary mostrar-ordem-visita-button"
+          onClick={handleMostrarOrdemVisita}
+          disabled={clientesSelecionados.length === 0}
+        >
+          Mostrar Ordem de Visita
+        </button>
+        <button
           className="button-primary delete-button"
           onClick={handleDeletarCliente}
           disabled={clientesSelecionados.length === 0}
@@ -179,6 +199,30 @@ const ClienteList = ({ onSelecionarCliente }) => {
       <div className="mensagem-rota">
         <strong>Melhor Rota:</strong> {mensagemRota}
       </div>
+
+      {/* Modal para exibir a ordem de visita */}
+      <Modal
+        isOpen={modalOrdemVisitaIsOpen}
+        onRequestClose={handleCloseModal}
+        contentLabel="Ordem de Visita"
+      >
+        <h2>Ordem de Visita</h2>
+        <ul>
+          {clientesSelecionados.map((clienteId) => {
+            const cliente = clientes.find((c) => c.id === clienteId);
+            return (
+              <li key={cliente.id}>
+                <strong>{cliente.nome}</strong>
+                <p>Email: {cliente.email}</p>
+                <p>Telefone: {cliente.telefone}</p>
+                <p>Coordenada X: {cliente.coordenada_x}</p>
+                <p>Coordenada Y: {cliente.coordenada_y}</p>
+              </li>
+            );
+          })}
+        </ul>
+        <button onClick={handleCloseModal}>Fechar</button>
+      </Modal>
 
       {/* Modal para alterar coordenadas */}
       <Modal

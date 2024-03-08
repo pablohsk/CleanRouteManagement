@@ -124,7 +124,7 @@ O back-end utiliza Express.js como framework para fornecer uma API RESTful, Sequ
 ## Configuração
 
 #### 1. **Instalação de Dependências:** - Execute `npm install` nos diretórios `my-node-project` e `Teste_Programa`.
-#### 2. **Configuração do Banco de Dados:** - Certifique-se de ter um banco de dados MySQL em execução. - Edite o arquivo `my-node-project/sequelize-config.js` com as configurações do seu banco de dados.
+#### 2. **Configuração do Banco de Dados:** - Certifique-se de ter um banco de dados PostgreSQL em execução. - Edite o arquivo `my-node-project/sequelize-config.js` com as configurações do seu banco de dados.
 #### 3. **Execução do Back-end:** - No diretório `my-node-project`, execute `npm start` para iniciar o servidor Node.js.
 #### 4. **Execução do Front-end:** - No diretório `Teste_Programa/my-node-project/client`, execute `npm start` para iniciar a aplicação React.
 #### 5. **Acesso à Aplicação:** - Abra o navegador e acesse `http://localhost:3000` para utilizar a aplicação. 

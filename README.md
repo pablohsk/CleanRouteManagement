@@ -48,7 +48,13 @@ Este projeto consiste em um sistema de gerenciamento de clientes, desenvolvido c
             </details>
           </li>
           <li><code>controllers</code></li>
+              <ul>
+                <li><code>clientesController.js</code></li>
+              </ul>
           <li><code>models</code></li>
+              <ul>
+                <li><code>clientesModel.js</code></li>
+              </ul>
           <li><code>node_modules</code></li>
           <li><code>public</code></li>
           <li>

@@ -1,60 +1,94 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './ClienteForm.css';
 
-const ClienteForm = () => {
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [telefone, setTelefone] = useState('');
-  const [coordenadaX, setCoordenadaX] = useState('');
-  const [coordenadaY, setCoordenadaY] = useState('');
+const FormularioCliente = () => {
+  const [cliente, setCliente] = useState({
+    nome: '',
+    email: '',
+    telefone: '',
+    coordenada_x: '',
+    coordenada_y: '',
+  });
+
+  const [mensagemSucesso, setMensagemSucesso] = useState('');
+  const [erro, setErro] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCliente((prevCliente) => ({
+      ...prevCliente,
+      [name]: value,
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      await axios.post('http://localhost:3000/clientes', {
-        nome,
-        email,
-        telefone,
-        coordenada_x: coordenadaX,
-        coordenada_y: coordenadaY,
-      });
-      // Atualizar a lista de clientes após cadastrar um novo
-      // Exemplo: fetchClientes();
+      // Fazer a chamada de API para adicionar o novo cliente
+      await axios.post('http://localhost:3000/clientes', cliente);
+
+      // Atualizar o estado para exibir a mensagem de sucesso
+      setMensagemSucesso('Cliente cadastrado com sucesso!');
+      setErro('');
     } catch (error) {
-      console.error('Erro ao cadastrar cliente:', error);
+      console.error('Erro ao adicionar cliente:', error);
+
+      // Atualizar o estado para exibir a mensagem de erro
+      setErro('Erro ao cadastrar cliente. Tente novamente.');
+      setMensagemSucesso('');
     }
   };
 
   return (
-    <div className="cliente-form-container">
-      <h2>Cadastrar Cliente</h2>
+    <div style={{ paddingTop: '20px', textAlign: 'center' }}>
+      <h2>Novo Cliente</h2>
       <form onSubmit={handleSubmit}>
-        <label>
-          Nome:
-          <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} />
-        </label>
-        <label>
-          Email:
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <label>
-          Telefone:
-          <input type="tel" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
-        </label>
-        <label>
-          Coordenada X:
-          <input type="number" value={coordenadaX} onChange={(e) => setCoordenadaX(e.target.value)} />
-        </label>
-        <label>
-          Coordenada Y:
-          <input type="number" value={coordenadaY} onChange={(e) => setCoordenadaY(e.target.value)} />
-        </label>
-        <button type="submit">Cadastrar</button>
+        <div style={{ marginBottom: '10px' }}>
+          <label>
+            Nome:
+            <br />
+            <input type="text" name="nome" value={cliente.nome} onChange={handleChange} />
+          </label>
+        </div>
+        <div style={{ marginBottom: '10px' }}>
+          <label>
+            Email:
+            <br />
+            <input type="text" name="email" value={cliente.email} onChange={handleChange} />
+          </label>
+        </div>
+        <div style={{ marginBottom: '10px' }}>
+          <label>
+            Telefone:
+            <br />
+            <input type="text" name="telefone" value={cliente.telefone} onChange={handleChange} />
+          </label>
+        </div>
+        <div style={{ marginBottom: '10px' }}>
+          <label>
+            Coordenada X:
+            <br />
+            <input type="text" name="coordenada_x" value={cliente.coordenada_x} onChange={handleChange} />
+          </label>
+        </div>
+        <div style={{ marginBottom: '10px' }}>
+          <label>
+            Coordenada Y:
+            <br />
+            <input type="text" name="coordenada_y" value={cliente.coordenada_y} onChange={handleChange} />
+          </label>
+        </div>
+        <div>
+          <button type="submit">Adicionar Cliente</button>
+        </div>
       </form>
+
+      {/* Exibir a mensagem de sucesso ou erro */}
+      {mensagemSucesso && <p style={{ color: 'green' }}>{mensagemSucesso}</p>}
+      {erro && <p style={{ color: 'red' }}>{erro}</p>}
     </div>
   );
 };
 
-export default ClienteForm;
+export default FormularioCliente;

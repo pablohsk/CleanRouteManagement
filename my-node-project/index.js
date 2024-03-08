@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const clientesRoutes = require('./routes/clientesRoutes');
 const sequelize = require('./sequelize-config');
@@ -7,6 +8,9 @@ const sequelize = require('./sequelize-config');
 sequelize.sync()
     .then(() => console.log('Modelo sincronizado com o banco de dados'))
     .catch((err) => console.error('Erro ao sincronizar o modelo com o banco de dados:', err));
+
+// Habilita CORS para todas as rotas
+app.use(cors());
 
 // Configurar middleware para análise de corpo (body parsing)
 app.use(express.json());

@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import Modal from 'react-modal';
 import './ClienteList.css';
 
-const ClienteList = () => {
+const ClienteList = ({ onSelecionarCliente }) => {
   const [clientes, setClientes] = useState([]);
-  const navigate = useNavigate(); // Criando uma instância de useNavigate
+  const [termoPesquisa, setTermoPesquisa] = useState('');
+  const [clientesSelecionados, setClientesSelecionados] = useState([]);
+  const [mensagemRota, setMensagemRota] = useState([]);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [novaCoordenadaX, setNovaCoordenadaX] = useState('');
+  const [novaCoordenadaY, setNovaCoordenadaY] = useState('');
 
   useEffect(() => {
     fetchClientes();
@@ -20,19 +25,204 @@ const ClienteList = () => {
     }
   };
 
-  const renderClienteDetails = (cliente) => {
-    // Utilizando a instância de useNavigate para navegar para a página de detalhes do cliente
-    navigate(`/clientes/${cliente.id}`);
+  const handleBuscarClientes = async () => {
+    try {
+      const response = await axios.get(`http://localhost:3000/clientes/filtrar?filtro=${termoPesquisa}`);
+      if (response.data) {
+        setClientes(response.data);
+      } else {
+      }
+    } catch (error) {
+      console.error('Erro ao pesquisar clientes:', error);
+    }
+  };
+
+  const handleDeletarCliente = async () => {
+    try {
+      // Verificar se há clientes selecionados
+      if (clientesSelecionados.length === 0) {
+        console.log('Nenhum cliente selecionado para deletar.');
+        return;
+      }
+
+      // Fazer a chamada de API para deletar os clientes selecionados
+      for (const clienteId of clientesSelecionados) {
+        await axios.delete(`http://localhost:3000/clientes/${clienteId}`);
+      }
+
+      // Atualizar a lista de clientes após a exclusão
+      fetchClientes();
+
+      // Limpar os clientes selecionados após a exclusão
+      setClientesSelecionados([]);
+    } catch (error) {
+      console.error('Erro ao deletar cliente:', error);
+    }
+  };
+
+  const handleCalcularRota = async () => {
+    try {
+      // Verificar se há clientes selecionados
+      if (clientesSelecionados.length === 0) {
+        console.log('Nenhum cliente selecionado para calcular a rota.');
+        return;
+      }
+  
+      // Construir a URL com os IDs dos clientes
+      const clienteIDs = clientesSelecionados.join(',');
+      const url = `http://localhost:3000/clientes/rota?clienteIDs=${clienteIDs}`;
+  
+      // Fazer a chamada de API para calcular a rota otimizada
+      const response = await axios.get(url);
+
+      // Atualizar o estado da mensagem da rota
+      setMensagemRota(response.data.rota);
+      
+      // Exibir a resposta da rota no console (ajuste conforme necessário)
+      console.log('Rota Calculada:', response.data);
+    } catch (error) {
+      console.error('Erro ao calcular a rota:', error);
+    }
+  };
+
+  const handleClickCheckbox = (clienteId) => {
+    // Toggle de seleção do cliente
+    setClientesSelecionados((prevClientes) => {
+      if (prevClientes.includes(clienteId)) {
+        return prevClientes.filter((id) => id !== clienteId);
+      } else {
+        return [...prevClientes, clienteId];
+      }
+    });
+  };
+
+  const handleAlterarCoordenadas = () => {
+    try {
+      // Verificar se há clientes selecionados
+      if (clientesSelecionados.length !== 1) {
+        console.log('Selecione exatamente um cliente para alterar as coordenadas.');
+        return;
+      }
+  
+      const clienteId = clientesSelecionados[0];
+  
+      // Abrir o modal para alterar coordenadas
+      setModalIsOpen(true);
+  
+      // Preencher as coordenadas atuais no estado do modal (removendo a chamada do GET)
+      setNovaCoordenadaX(clientes.find(cliente => cliente.id === clienteId).coordenada_x.toString());
+      setNovaCoordenadaY(clientes.find(cliente => cliente.id === clienteId).coordenada_y.toString());
+    } catch (error) {
+      console.error('Erro ao alterar coordenadas:', error);
+    }
+  };
+
+  const handleSalvarCoordenadas = async () => {
+    try {
+      const clienteId = clientesSelecionados[0];
+
+      // Fazer a chamada de API para alterar as coordenadas
+      await axios.put(`http://localhost:3000/clientes/${clienteId}`, {
+        coordenada_x: novaCoordenadaX,
+        coordenada_y: novaCoordenadaY,
+      });
+
+      // Fechar o modal
+      setModalIsOpen(false);
+
+      // Atualizar a lista de clientes após a alteração
+      fetchClientes();
+
+      // Limpar os clientes selecionados após a alteração
+      setClientesSelecionados([]);
+    } catch (error) {
+      console.error('Erro ao salvar coordenadas:', error);
+    }
+  };
+
+  const handleCloseModal = () => {
+    // Fechar o modal sem salvar
+    setModalIsOpen(false);
   };
 
   return (
     <div className="cliente-list-container">
       <h2>Lista de Clientes</h2>
+      <div className="filtro-container">
+        <input
+          type="text"
+          placeholder="Procurar cliente"
+          value={termoPesquisa}
+          onChange={(e) => setTermoPesquisa(e.target.value)}
+        />
+        <button className="button-primary" onClick={handleBuscarClientes}>
+          Buscar
+        </button>
+        <button className="button-primary calcular-rota-button" onClick={handleCalcularRota}>
+          Calcular Rota
+        </button>
+        <button
+          className="button-primary alterar-coordenadas-button"
+          onClick={handleAlterarCoordenadas}
+          disabled={clientesSelecionados.length !== 1}
+        >
+          Alterar Coordenadas
+        </button>
+        <button
+          className="button-primary delete-button"
+          onClick={handleDeletarCliente}
+          disabled={clientesSelecionados.length === 0}
+        >
+          Deletar Cliente
+        </button>
+      </div>
+      <div className="mensagem-rota">
+        <strong>Melhor Rota:</strong> {mensagemRota}
+      </div>
+
+      {/* Modal para alterar coordenadas */}
+      <Modal
+        isOpen={modalIsOpen}
+        onRequestClose={handleCloseModal}
+        contentLabel="Alterar Coordenadas"
+      >
+        <h2>Alterar Coordenadas</h2>
+        <label>
+          Nova Coordenada X:
+          <input
+            type="text"
+            value={novaCoordenadaX}
+            onChange={(e) => setNovaCoordenadaX(e.target.value)}
+          />
+        </label>
+        <label>
+          Nova Coordenada Y:
+          <input
+            type="text"
+            value={novaCoordenadaY}
+            onChange={(e) => setNovaCoordenadaY(e.target.value)}
+          />
+        </label>
+        <button onClick={handleSalvarCoordenadas}>Salvar</button>
+        <button onClick={handleCloseModal}>Cancelar</button>
+      </Modal>
+
       <ul>
         {clientes.map((cliente) => (
-          <li key={cliente.id} onClick={() => renderClienteDetails(cliente)}>
+          <li key={cliente.id} onClick={() => onSelecionarCliente(cliente.id)}>
+            <input
+              type="checkbox"
+              onClick={(e) => {
+                e.stopPropagation(); // Evita o redirecionamento
+                handleClickCheckbox(cliente.id);
+              }}
+              checked={clientesSelecionados.includes(cliente.id)}
+            />
             <strong>{cliente.nome}</strong>
-            <p>{cliente.email}</p>
+            <p>Email: {cliente.email}</p>
+            <p>Telefone: {cliente.telefone}</p>
+            <p>Coordenada X: {cliente.coordenada_x}</p>
+            <p>Coordenada Y: {cliente.coordenada_y}</p>
           </li>
         ))}
       </ul>

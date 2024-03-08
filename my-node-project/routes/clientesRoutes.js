@@ -2,14 +2,6 @@ const express = require('express');
 const router = express.Router();
 const clientesController = require('../controllers/clientesController');
 
-
-// Middleware para debug do corpo da requisição
-//router.use((req, res, next) => {
-//    const body = req.body;
-//    console.log('Body da requisição clientesRoute:', body);
-//   next();
-//});
-
 // Rota para listar clientes
 router.get('/', (req, res) => {
     clientesController.listarClientes(req, res);

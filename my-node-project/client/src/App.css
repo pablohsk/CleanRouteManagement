@@ -57,3 +57,16 @@ nav a.active-link {
   flex: 1;
   padding: 20px;
 }
+
+.botao-verde {
+  background-color: #4caf50;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.botao-verde:hover {
+  background-color: #45a049;
+}

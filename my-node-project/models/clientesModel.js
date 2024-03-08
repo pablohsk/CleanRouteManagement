@@ -28,7 +28,6 @@ const Cliente = sequelize.define('Cliente', {
 
 // Função para salvar um novo cliente
 const salvarClienteModel = async (nome, email, telefone, coordenada_x, coordenada_y) => {
-  //console.log('Body da requisição clientesModel:', body);
 
   try {
     const novoCliente = await Cliente.create({

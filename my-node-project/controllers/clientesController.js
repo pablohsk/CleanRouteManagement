@@ -40,69 +40,36 @@ const atualizarCoordenadas = async (id, coordenada_x, coordenada_y) => {
 };
 
 const calcularRotaOtimizada = async (clientes) => {
-    const calcularDistancia = (cliente1, cliente2) => {
-      const deltaX = cliente1.coordenada_x - cliente2.coordenada_x;
-      const deltaY = cliente1.coordenada_y - cliente2.coordenada_y;
-      return Math.sqrt(deltaX ** 2 + deltaY ** 2);
-    };
-  
-    const calcularCustoTotal = (rota) => {
-      let custoTotal = 0;
-      for (let i = 0; i < rota.length - 1; i++) {
-        custoTotal += calcularDistancia(rota[i], rota[i + 1]);
-      }
-      custoTotal += calcularDistancia(rota[rota.length - 1], { coordenada_x: 0, coordenada_y: 0 });
-      return custoTotal;
-    };
-  
-    const heapPermute = (arr) => {
-      const result = [];
-  
-      const swap = (a, b) => {
-        const temp = arr[a];
-        arr[a] = arr[b];
-        arr[b] = temp;
-      };
-  
-      const generate = (n) => {
-        if (n === 1) {
-          result.push([...arr]);
-        } else {
-          for (let i = 0; i < n; i++) {
-            generate(n - 1);
-            if (n % 2 === 0) {
-              swap(i, n - 1);
-            } else {
-              swap(0, n - 1);
-            }
-          }
-        }
-      };
-  
-      generate(arr.length);
-  
-      return result;
-    };
-  
-    const permutedRoutes = await heapPermute(clientes);
-    const pontoPartida = { coordenada_x: 0, coordenada_y: 0 };
-  
-    let melhorRota = [];
-    let menorCusto = Infinity;
-  
-    for (const rotaAtual of permutedRoutes) {
-      const rotaComPartida = [pontoPartida, ...rotaAtual];
-      const custoAtual = calcularCustoTotal(rotaComPartida);
-  
-      if (custoAtual < menorCusto) {
-        melhorRota = rotaComPartida;
-        menorCusto = custoAtual;
-      }
-    }
-  
-    const nomesMelhorRota = melhorRota.map(cliente => cliente.nome); // Alteração aqui
-    return { rota: `A melhor rota será: ${nomesMelhorRota.join(' -> ')} e o custo total será de: ${menorCusto}`, custo: menorCusto };
+  const calcularDistancia = (cliente1, cliente2) => {
+    const deltaX = cliente1.coordenada_x - cliente2.coordenada_x;
+    const deltaY = cliente1.coordenada_y - cliente2.coordenada_y;
+    return Math.sqrt(deltaX ** 2 + deltaY ** 2);
   };
+
+  const calcularCustoTotal = (rota) => {
+    let custoTotal = 0;
+    for (let i = 0; i < rota.length - 1; i++) {
+      custoTotal += calcularDistancia(rota[i], rota[i + 1]);
+    }
+    custoTotal += calcularDistancia(rota[rota.length - 1], { coordenada_x: 0, coordenada_y: 0 });
+    return custoTotal * 7; // Custo considerando R$7,00 por unidade de distância
+  };
+
+  const calcularProximidade = (cliente) => {
+    return calcularDistancia(cliente, { coordenada_x: 0, coordenada_y: 0 });
+  };
+
+  // Ordenar os clientes pela proximidade ao ponto de partida
+  const clientesOrdenados = clientes.slice().sort((a, b) => calcularProximidade(a) - calcularProximidade(b));
+
+  const melhorRota = [ { coordenada_x: 0, coordenada_y: 0 }, ...clientesOrdenados ];
+
+  const custoTotal = calcularCustoTotal(melhorRota);
+
+  const nomesMelhorRota = melhorRota.map((cliente) => cliente.nome);
+  
+  return { rota: `A melhor rota será: ${nomesMelhorRota.join(' -> ')} e o custo total será de: R$${custoTotal.toFixed(2)}`, custo: custoTotal };
+};
 
 const obterClientesPorIDs = async (clienteIDs) => {
     try {

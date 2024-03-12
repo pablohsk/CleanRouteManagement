@@ -7,6 +7,7 @@ const ClienteList = ({ onSelecionarCliente }) => {
   const [clientes, setClientes] = useState([]);
   const [termoPesquisa, setTermoPesquisa] = useState('');
   const [clientesSelecionados, setClientesSelecionados] = useState([]);
+  const [selecaoAnterior, setSelecaoAnterior] = useState([]);
   const [mensagemRota, setMensagemRota] = useState([]);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [novaCoordenadaX, setNovaCoordenadaX] = useState('');
@@ -28,10 +29,26 @@ const ClienteList = ({ onSelecionarCliente }) => {
 
   const handleBuscarClientes = async () => {
     try {
+      // Armazenar a seleção anterior antes de iniciar uma nova pesquisa
+      setSelecaoAnterior([...clientesSelecionados]);
+  
       const response = await axios.get(`http://localhost:3000/clientes/filtrar?filtro=${termoPesquisa}`);
       if (response.data) {
-        setClientes(response.data);
+        const clientesFiltrados = response.data;
+  
+        // Verificar se há uma seleção anterior
+        if (selecaoAnterior.length > 0) {
+          // Atualizar a lista de clientes mantendo a seleção anterior
+          setClientes(clientesFiltrados.map(cliente => {
+            const isSelected = selecaoAnterior.includes(cliente.id);
+            return { ...cliente, isSelected };
+          }));
+        } else {
+          // Caso contrário, apenas atualize a lista de clientes
+          setClientes(clientesFiltrados);
+        }
       } else {
+        // Lógica para quando não há dados de resposta
       }
     } catch (error) {
       console.error('Erro ao pesquisar clientes:', error);
@@ -87,14 +104,22 @@ const ClienteList = ({ onSelecionarCliente }) => {
   };
 
   const handleClickCheckbox = (clienteId) => {
+    // Manter a seleção anterior durante a pesquisa
+    const selecaoAnteriorAtualizada = [...selecaoAnterior];
+  
     // Toggle de seleção do cliente
     setClientesSelecionados((prevClientes) => {
       if (prevClientes.includes(clienteId)) {
+        // Remover da seleção atual
         return prevClientes.filter((id) => id !== clienteId);
       } else {
+        // Adicionar à seleção atual
         return [...prevClientes, clienteId];
       }
     });
+  
+    // Atualizar a seleção anterior
+    setSelecaoAnterior(selecaoAnteriorAtualizada);
   };
 
   const handleAlterarCoordenadas = () => {
@@ -106,13 +131,16 @@ const ClienteList = ({ onSelecionarCliente }) => {
       }
   
       const clienteId = clientesSelecionados[0];
+      const clienteSelecionado = clientes.find(cliente => cliente.id === clienteId);
   
-      // Abrir o modal para alterar coordenadas
-      setModalIsOpen(true);
+      if (clienteSelecionado) {
+        // Abrir o modal para alterar coordenadas
+        setModalIsOpen(true);
   
-      // Preencher as coordenadas atuais no estado do modal (removendo a chamada do GET)
-      setNovaCoordenadaX(clientes.find(cliente => cliente.id === clienteId).coordenada_x.toString());
-      setNovaCoordenadaY(clientes.find(cliente => cliente.id === clienteId).coordenada_y.toString());
+        // Preencher as coordenadas atuais no estado do modal
+        setNovaCoordenadaX(clienteSelecionado.coordenada_x.toString());
+        setNovaCoordenadaY(clienteSelecionado.coordenada_y.toString());
+      }
     } catch (error) {
       console.error('Erro ao alterar coordenadas:', error);
     }
@@ -141,21 +169,39 @@ const ClienteList = ({ onSelecionarCliente }) => {
     }
   };
 
-  const handleMostrarOrdemVisita = () => {
-    // Verificar se há clientes selecionados
-    if (clientesSelecionados.length === 0) {
-      console.log('Selecione pelo menos um cliente para mostrar a ordem de visita.');
-      return;
-    }
-
-    // Exibir a ordem de visita em uma modal
-    setModalOrdemVisitaIsOpen(true);
-  };
-
   const handleCloseModal = () => {
-    // Fechar o modal sem salvar
     setModalIsOpen(false);
     setModalOrdemVisitaIsOpen(false);
+  }
+
+  const handleMostrarOrdemVisita = async () => {
+    try {
+      if (clientesSelecionados.length === 0) {
+        console.log('Selecione pelo menos um cliente para mostrar a ordem de visita.');
+        setMensagemRota(''); // Limpar a mensagem de rota quando nenhum cliente está selecionado
+        return;
+      }
+  
+      const clienteIDs = clientesSelecionados.join(',');
+      const url = `http://localhost:3000/clientes/rota?clienteIDs=${clienteIDs}`;
+      const response = await axios.get(url);
+  
+      setModalOrdemVisitaIsOpen(true);
+  
+      // Verifique se a resposta contém a ordem dos clientes
+      if (response.data.ordemVisita) {
+        const ordemVisita = response.data.ordemVisita;
+  
+        // Atualize a ordem de visita no estado local
+        setClientes(ordemVisita);
+  
+        setMensagemRota(response.data.rota);
+      } else {
+        console.error('A resposta do serviço não contém a ordem de visita.');
+      }
+    } catch (error) {
+      console.error('Erro ao calcular a rota otimizada:', error);
+    }
   };
 
   return (
@@ -208,21 +254,36 @@ const ClienteList = ({ onSelecionarCliente }) => {
       >
         <h2>Ordem de Visita</h2>
         <ul>
-          {clientesSelecionados.map((clienteId) => {
-            const cliente = clientes.find((c) => c.id === clienteId);
-            return (
+          {clientesSelecionados
+            .map((clienteId) => clientes.find((c) => c.id === clienteId))
+            .filter((cliente) => cliente) // Remover clientes indefinidos
+            .sort((a, b) => {
+              // Função para calcular a distância entre dois pontos no plano cartesiano
+              const calcularDistancia = (cliente1, cliente2) => {
+                const deltaX = cliente1.coordenada_x - cliente2.coordenada_x;
+                const deltaY = cliente1.coordenada_y - cliente2.coordenada_y;
+                return Math.sqrt(deltaX ** 2 + deltaY ** 2);
+              };
+
+              // Ordenar clientes pela distância ao ponto de partida (0,0)
+              const distanciaA = calcularDistancia({ coordenada_x: 0, coordenada_y: 0 }, a);
+              const distanciaB = calcularDistancia({ coordenada_x: 0, coordenada_y: 0 }, b);
+              return distanciaA - distanciaB;
+            })
+            .map((cliente, index) => (
               <li key={cliente.id}>
                 <strong>{cliente.nome}</strong>
                 <p>Email: {cliente.email}</p>
                 <p>Telefone: {cliente.telefone}</p>
                 <p>Coordenada X: {cliente.coordenada_x}</p>
                 <p>Coordenada Y: {cliente.coordenada_y}</p>
+                <p>Visita: {index + 1}</p>
               </li>
-            );
-          })}
+            ))}
         </ul>
         <button onClick={handleCloseModal}>Fechar</button>
       </Modal>
+
 
       {/* Modal para alterar coordenadas */}
       <Modal
@@ -250,25 +311,21 @@ const ClienteList = ({ onSelecionarCliente }) => {
         <button onClick={handleSalvarCoordenadas}>Salvar</button>
         <button onClick={handleCloseModal}>Cancelar</button>
       </Modal>
-
       <ul>
-        {clientes.map((cliente) => (
-          <li key={cliente.id} onClick={() => onSelecionarCliente(cliente.id)}>
-            <input
-              type="checkbox"
-              onClick={(e) => {
-                e.stopPropagation(); // Evita o redirecionamento
-                handleClickCheckbox(cliente.id);
-              }}
-              checked={clientesSelecionados.includes(cliente.id)}
-            />
-            <strong>{cliente.nome}</strong>
-            <p>Email: {cliente.email}</p>
-            <p>Telefone: {cliente.telefone}</p>
-            <p>Coordenada X: {cliente.coordenada_x}</p>
-            <p>Coordenada Y: {cliente.coordenada_y}</p>
-          </li>
-        ))}
+      {clientes.map((cliente) => (
+        <li key={cliente.id} onClick={() => onSelecionarCliente(cliente.id)}>
+          <input
+            type="checkbox"
+            onChange={() => handleClickCheckbox(cliente.id)}
+            checked={clientesSelecionados.includes(cliente.id)}
+          />
+          <strong>{cliente && cliente.nome}</strong>
+          <p>Email: {cliente && cliente.email}</p>
+          <p>Telefone: {cliente && cliente.telefone}</p>
+          <p>Coordenada X: {cliente && cliente.coordenada_x}</p>
+          <p>Coordenada Y: {cliente && cliente.coordenada_y}</p>
+        </li>
+      ))}
       </ul>
     </div>
   );

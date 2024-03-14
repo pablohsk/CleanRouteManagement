@@ -88,8 +88,21 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-router.get('/rota', (req, res) => {
-    res.redirect('/clientes/rota');
-});
+router.get('/rota', async (req, res) => {
+    try {
+      // Obter os IDs dos clientes da query de requisição
+      const clienteIDs = req.query.clienteIDs.split(',');
+      
+      // Chamar a função do backend para calcular a rota otimizada
+      const response = await calcularRotaOtimizada(clienteIDs);
+  
+      // Retornar a resposta com a rota otimizada
+      res.json(response);
+    } catch (error) {
+      // Em caso de erro, retornar uma resposta de erro
+      console.error('Erro ao calcular a rota:', error);
+      res.status(500).json({ error: 'Erro ao calcular a rota' });
+    }
+  });
 
 module.exports = router;

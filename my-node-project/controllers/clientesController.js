@@ -68,7 +68,11 @@ const calcularRotaOtimizada = async (clientes) => {
 
   const nomesMelhorRota = melhorRota.map((cliente) => cliente.nome);
   
-  return { rota: `A melhor rota será: ${nomesMelhorRota.join(' -> ')} e o custo total será de: R$${custoTotal.toFixed(2)}`, custo: custoTotal };
+  return { 
+    rota: `A melhor rota será: ${nomesMelhorRota.join(' -> ')} e o custo total será de: R$${custoTotal.toFixed(2)}`,
+    custo: custoTotal,
+    clientesOrdenados: clientesOrdenados.map((cliente) => cliente),
+  };
 };
 
 const obterClientesPorIDs = async (clienteIDs) => {
